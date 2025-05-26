@@ -4,164 +4,254 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Toxic Baby AI Chat</title>
-  <link rel="stylesheet" href="styles.css" />
   <style>
     :root {
-      --bg-color-light: #f9f9f9;
-      --text-color-light: #222;
-      --bg-color-dark: #121212;
-      --text-color-dark: #eee;
-      --primary-color: #ff4081;
-      --primary-color-hover: #e73370;
+      --color-dark-bg: #121212;
+      --color-dark-text: #eee;
+      --color-light-bg: #fff;
+      --color-light-text: #222;
+      --primary-color: #10a37f;
+      --primary-color-hover: #0d7a63;
+    }
+
+    /* Reset & basics */
+    * {
+      box-sizing: border-box;
     }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: var(--bg-color-light);
-      color: var(--text-color-light);
       margin: 0;
-      padding: 0 1rem;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
+      height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--color-dark-bg);
+      color: var(--color-dark-text);
       display: flex;
       flex-direction: column;
-      height: 100vh;
+      max-width: 600px;
+      margin: 0 auto;
     }
-    body.dark-mode {
-      background-color: var(--bg-color-dark);
-      color: var(--text-color-dark);
+    body.light-mode {
+      background-color: var(--color-light-bg);
+      color: var(--color-light-text);
     }
+
+    /* Header */
     header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      padding: 1rem 0;
+      justify-content: space-between;
+      padding: 1rem 1rem 0.5rem 1rem;
+      position: sticky;
+      top: 0;
+      background: inherit;
+      z-index: 10;
+      border-bottom: 1px solid #3334;
+    }
+    body.light-mode header {
+      border-color: #ccc;
     }
     header h1 {
+      font-weight: 600;
+      font-size: 1.5rem;
       margin: 0;
-      font-size: 1.8rem;
     }
-    #toggleDark {
-      cursor: pointer;
-      background: var(--primary-color);
+
+    /* Menu container */
+    .menu-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    button, #toggleDark {
+      background-color: transparent;
       border: none;
-      color: white;
-      padding: 0.4rem 0.8rem;
-      border-radius: 5px;
-      font-weight: 600;
-      transition: background 0.3s ease;
-    }
-    #toggleDark:hover {
-      background: var(--primary-color-hover);
-    }
-    #profileBtn {
-      margin-left: 1rem;
-      background: transparent;
-      border: 2px solid var(--primary-color);
-      color: var(--primary-color);
-      padding: 0.3rem 0.7rem;
-      border-radius: 5px;
-      font-weight: 600;
+      color: inherit;
       cursor: pointer;
-      transition: background 0.3s ease, color 0.3s ease;
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      transition: background-color 0.2s ease;
     }
-    #profileBtn:hover {
-      background: var(--primary-color);
+    button:hover, #toggleDark:hover {
+      background-color: var(--primary-color-hover);
       color: white;
     }
+
+    /* Menu dropdown */
+    #menuDropdown {
+      position: absolute;
+      top: 2.8rem;
+      right: 0;
+      background-color: var(--color-dark-bg);
+      border: 1px solid #444;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      display: none;
+      flex-direction: column;
+      min-width: 140px;
+      z-index: 20;
+    }
+    body.light-mode #menuDropdown {
+      background-color: var(--color-light-bg);
+      border-color: #ddd;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    #menuDropdown button {
+      padding: 0.8rem 1rem;
+      text-align: left;
+      border-radius: 0;
+      border-bottom: 1px solid #3334;
+      color: inherit;
+    }
+    #menuDropdown button:last-child {
+      border-bottom: none;
+    }
+    #menuDropdown button:hover {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    /* Username display */
+    #usernameDisplay {
+      text-align: center;
+      padding: 0.5rem 1rem;
+      font-weight: 600;
+      color: var(--primary-color);
+      user-select: none;
+    }
+
+    /* Chat box */
     #chatBox {
       flex: 1;
       overflow-y: auto;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      padding: 1rem;
-      background-color: white;
-      margin-bottom: 1rem;
+      padding: 1rem 1rem 1rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      scroll-behavior: smooth;
     }
-    body.dark-mode #chatBox {
-      background-color: #222;
-      border-color: #555;
+    body.light-mode #chatBox {
+      /* Optional: lighter background */
     }
+
+    /* Messages */
     .message {
-      margin-bottom: 1rem;
-      max-width: 80%;
-      padding: 0.6rem 1rem;
+      max-width: 75%;
+      padding: 0.75rem 1rem;
       border-radius: 20px;
       line-height: 1.4;
+      white-space: pre-wrap;
       word-wrap: break-word;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+      font-size: 1rem;
+      user-select: text;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
+    /* User messages (right) */
     .message.user {
       background-color: var(--primary-color);
       color: white;
-      margin-left: auto;
-      border-bottom-right-radius: 0;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 2px 6px rgb(16 163 127 / 0.5);
     }
+    body.light-mode .message.user {
+      background-color: var(--primary-color);
+      color: white;
+      box-shadow: 0 2px 6px rgb(16 163 127 / 0.7);
+    }
+    /* Bot messages (left) */
     .message.bot {
-      background-color: #eee;
-      color: #333;
-      margin-right: auto;
-      border-bottom-left-radius: 0;
-    }
-    body.dark-mode .message.bot {
-      background-color: #444;
+      background-color: #2a2a2a;
       color: #ddd;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
     }
+    body.light-mode .message.bot {
+      background-color: #eee;
+      color: #222;
+    }
+
+    /* Input form */
     #inputForm {
       display: flex;
-      margin-bottom: 1rem;
+      padding: 0.5rem 1rem 1rem 1rem;
+      background: inherit;
+      border-top: 1px solid #3334;
+      position: sticky;
+      bottom: 0;
+      z-index: 10;
+    }
+    body.light-mode #inputForm {
+      border-color: #ccc;
     }
     #messageInput {
       flex: 1;
-      padding: 0.6rem 1rem;
-      border-radius: 20px;
-      border: 1px solid #ccc;
+      padding: 0.75rem 1rem;
+      border-radius: 9999px;
+      border: 1px solid #444;
       font-size: 1rem;
-    }
-    body.dark-mode #messageInput {
-      background-color: #333;
-      border-color: #555;
+      background-color: #222;
       color: #eee;
+      outline-offset: 2px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    body.light-mode #messageInput {
+      background-color: #f9f9f9;
+      border: 1px solid #ccc;
+      color: #222;
+    }
+    #messageInput::placeholder {
+      color: #aaa;
     }
     #sendBtn {
-      margin-left: 0.5rem;
+      margin-left: 0.75rem;
       background-color: var(--primary-color);
       color: white;
       border: none;
+      border-radius: 9999px;
       padding: 0 1.5rem;
-      border-radius: 20px;
+      font-weight: 700;
       font-size: 1rem;
       cursor: pointer;
-      transition: background 0.3s ease;
+      transition: background-color 0.3s ease;
     }
     #sendBtn:hover {
       background-color: var(--primary-color-hover);
     }
-    #usernameDisplay {
-      font-weight: 600;
-      font-size: 1rem;
-      margin-top: 0.5rem;
-      text-align: center;
-      color: var(--primary-color);
-    }
+
   </style>
 </head>
 <body>
 
   <header>
     <h1>Toxic Baby AI Chat</h1>
-    <div>
-      <button id="toggleDark">Dark Mode</button>
-      <button id="profileBtn">Profile</button>
+    <div class="menu-container">
+      <button id="menuBtn" aria-haspopup="true" aria-expanded="false" title="Menu">☰</button>
+      <button id="toggleDark" aria-label="Toggle Light/Dark Mode">Light Mode</button>
+      <div id="menuDropdown" role="menu" aria-hidden="true">
+        <button id="profileBtn" role="menuitem">Profile</button>
+        <button id="chatHistoryBtn" role="menuitem">Chat History</button>
+      </div>
     </div>
   </header>
 
   <div id="usernameDisplay"></div>
 
-  <div id="chatBox"></div>
+  <div id="chatBox" role="log" aria-live="polite" aria-relevant="additions"></div>
 
-  <form id="inputForm">
-    <input id="messageInput" autocomplete="off" placeholder="Say something..." />
-    <button type="submit" id="sendBtn">Send</button>
+  <form id="inputForm" autocomplete="off" aria-label="Send message form">
+    <input
+      type="text"
+      id="messageInput"
+      placeholder="Say something..."
+      autocomplete="off"
+      required
+      aria-required="true"
+      aria-label="Message input"
+    />
+    <button type="submit" id="sendBtn" aria-label="Send message">Send</button>
   </form>
 
   <script>
@@ -180,29 +270,71 @@
     const messageInput = document.getElementById('messageInput');
     const toggleDarkBtn = document.getElementById('toggleDark');
     const profileBtn = document.getElementById('profileBtn');
+    const chatHistoryBtn = document.getElementById('chatHistoryBtn');
+    const menuBtn = document.getElementById('menuBtn');
+    const menuDropdown = document.getElementById('menuDropdown');
 
-    // Toggle Dark Mode
-    toggleDarkBtn.addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-      toggleDarkBtn.textContent = document.body.classList.contains('dark-mode') ? 'Light Mode' : 'Dark Mode';
-      localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
-    });
-
-    // Load dark mode setting on page load
-    if (localStorage.getItem('darkMode') === 'true') {
-      document.body.classList.add('dark-mode');
+    // Set initial dark mode state
+    const darkModeStored = localStorage.getItem('darkMode');
+    if (darkModeStored === null || darkModeStored === 'true') {
+      document.body.classList.remove('light-mode');
       toggleDarkBtn.textContent = 'Light Mode';
+    } else {
+      document.body.classList.add('light-mode');
+      toggleDarkBtn.textContent = 'Dark Mode';
     }
 
-    // Redirect to profile page
+    // Toggle Light/Dark mode
+    toggleDarkBtn.addEventListener('click', () => {
+      if (document.body.classList.contains('light-mode')) {
+        document.body.classList.remove('light-mode');
+        toggleDarkBtn.textContent = 'Light Mode';
+        localStorage.setItem('darkMode', 'true');
+      } else {
+        document.body.classList.add('light-mode');
+        toggleDarkBtn.textContent = 'Dark Mode';
+        localStorage.setItem('darkMode', 'false');
+      }
+    });
+
+    // Menu toggle
+    menuBtn.addEventListener('click', () => {
+      const expanded = menuBtn.getAttribute('aria-expanded') === 'true';
+      if (expanded) {
+        menuDropdown.style.display = 'none';
+        menuBtn.setAttribute('aria-expanded', 'false');
+        menuDropdown.setAttribute('aria-hidden', 'true');
+      } else {
+        menuDropdown.style.display = 'flex';
+        menuBtn.setAttribute('aria-expanded', 'true');
+        menuDropdown.setAttribute('aria-hidden', 'false');
+      }
+    });
+
+    // Close menu if click outside
+    document.addEventListener('click', e => {
+      if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
+        menuDropdown.style.display = 'none';
+        menuBtn.setAttribute('aria-expanded', 'false');
+        menuDropdown.setAttribute('aria-hidden', 'true');
+      }
+    });
+
+    // Profile button
     profileBtn.addEventListener('click', () => {
       window.location.href = `profile.html?username=${encodeURIComponent(username)}`;
+    });
+
+    // Chat History button
+    chatHistoryBtn.addEventListener('click', () => {
+      window.location.href = `chat-history.html?username=${encodeURIComponent(username)}`;
     });
 
     // Load chat history on page load
     async function loadChatHistory() {
       try {
         const res = await fetch(`/history/${encodeURIComponent(username)}`);
+        if (!res.ok) throw new Error('Failed to load history');
         const history = await res.json();
         chatBox.innerHTML = '';
         history.forEach(msg => {
@@ -210,7 +342,7 @@
         });
         chatBox.scrollTop = chatBox.scrollHeight;
       } catch {
-        chatBox.innerHTML = '<p>Failed to load chat history.</p>';
+        chatBox.innerHTML = '<p style="text-align:center; color:#f55;">Failed to load chat history.</p>';
       }
     }
 
