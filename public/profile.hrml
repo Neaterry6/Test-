@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Profile - Toxic Baby AI</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Your Profile</h1>
+    <div id="profile-info">
+      <p><strong>Username:</strong> <span id="username"></span></p>
+      <p><strong>Account Created:</strong> <span id="createdAt"></span></p>
+    </div>
+    <button onclick="goBack()">Back to Chat</button>
+  </div>
+
+  <script>
+    function getUsernameFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('username') || '';
+    }
+
+    function goBack() {
+      const username = getUsernameFromURL();
+      window.location.href = `/chat.html?username=${encodeURIComponent(username)}`;
+    }
+
+    async function loadProfile() {
+      const username = getUsernameFromURL();
+      if (!username) {
+        alert('No username found');
+        return;
+      }
+
+      document.getElementById('username').textContent = username;
+
+      try {
+        const res = await fetch(`/profile/${encodeURIComponent(username)}`);
+        if (!res.ok) throw new Error('User not found');
+        const data = await res.json();
+        const created = new Date(data.createdAt);
+        document.getElementById('createdAt').textContent = created.toLocaleString();
+      } catch (err) {
+        alert('Failed to load profile.');
+      }
+    }
+
+    loadProfile();
+  </script>
+</body>
+</html>
