@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Toxic Baby AI Chat</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    :root {
+      --bg-color-light: #f9f9f9;
+      --text-color-light: #222;
+      --bg-color-dark: #121212;
+      --text-color-dark: #eee;
+      --primary-color: #ff4081;
+      --primary-color-hover: #e73370;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color-light);
+      color: var(--text-color-light);
+      margin: 0;
+      padding: 0 1rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    body.dark-mode {
+      background-color: var(--bg-color-dark);
+      color: var(--text-color-dark);
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.8rem;
+    }
+    #toggleDark {
+      cursor: pointer;
+      background: var(--primary-color);
+      border: none;
+      color: white;
+      padding: 0.4rem 0.8rem;
+      border-radius: 5px;
+      font-weight: 600;
+      transition: background 0.3s ease;
+    }
+    #toggleDark:hover {
+      background: var(--primary-color-hover);
+    }
+    #profileBtn {
+      margin-left: 1rem;
+      background: transparent;
+      border: 2px solid var(--primary-color);
+      color: var(--primary-color);
+      padding: 0.3rem 0.7rem;
+      border-radius: 5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    #profileBtn:hover {
+      background: var(--primary-color);
+      color: white;
+    }
+    #chatBox {
+      flex: 1;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 1rem;
+      background-color: white;
+      margin-bottom: 1rem;
+    }
+    body.dark-mode #chatBox {
+      background-color: #222;
+      border-color: #555;
+    }
+    .message {
+      margin-bottom: 1rem;
+      max-width: 80%;
+      padding: 0.6rem 1rem;
+      border-radius: 20px;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+    .message.user {
+      background-color: var(--primary-color);
+      color: white;
+      margin-left: auto;
+      border-bottom-right-radius: 0;
+    }
+    .message.bot {
+      background-color: #eee;
+      color: #333;
+      margin-right: auto;
+      border-bottom-left-radius: 0;
+    }
+    body.dark-mode .message.bot {
+      background-color: #444;
+      color: #ddd;
+    }
+    #inputForm {
+      display: flex;
+      margin-bottom: 1rem;
+    }
+    #messageInput {
+      flex: 1;
+      padding: 0.6rem 1rem;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+    body.dark-mode #messageInput {
+      background-color: #333;
+      border-color: #555;
+      color: #eee;
+    }
+    #sendBtn {
+      margin-left: 0.5rem;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 0 1.5rem;
+      border-radius: 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    #sendBtn:hover {
+      background-color: var(--primary-color-hover);
+    }
+    #usernameDisplay {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-top: 0.5rem;
+      text-align: center;
+      color: var(--primary-color);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Toxic Baby AI Chat</h1>
+    <div>
+      <button id="toggleDark">Dark Mode</button>
+      <button id="profileBtn">Profile</button>
+    </div>
+  </header>
+
+  <div id="usernameDisplay"></div>
+
+  <div id="chatBox"></div>
+
+  <form id="inputForm">
+    <input id="messageInput" autocomplete="off" placeholder="Say something..." />
+    <button type="submit" id="sendBtn">Send</button>
+  </form>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const username = urlParams.get('username');
+
+    if (!username) {
+      alert('No username found. Please login first.');
+      window.location.href = '/login.html';
+    }
+
+    document.getElementById('usernameDisplay').textContent = `Logged in as: ${username}`;
+
+    const chatBox = document.getElementById('chatBox');
+    const inputForm = document.getElementById('inputForm');
+    const messageInput = document.getElementById('messageInput');
+    const toggleDarkBtn = document.getElementById('toggleDark');
+    const profileBtn = document.getElementById('profileBtn');
+
+    // Toggle Dark Mode
+    toggleDarkBtn.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      toggleDarkBtn.textContent = document.body.classList.contains('dark-mode') ? 'Light Mode' : 'Dark Mode';
+      localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+    });
+
+    // Load dark mode setting on page load
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.body.classList.add('dark-mode');
+      toggleDarkBtn.textContent = 'Light Mode';
+    }
+
+    // Redirect to profile page
+    profileBtn.addEventListener('click', () => {
+      window.location.href = `profile.html?username=${encodeURIComponent(username)}`;
+    });
+
+    // Load chat history on page load
+    async function loadChatHistory() {
+      try {
+        const res = await fetch(`/history/${encodeURIComponent(username)}`);
+        const history = await res.json();
+        chatBox.innerHTML = '';
+        history.forEach(msg => {
+          addMessage(msg.from, msg.text);
+        });
+        chatBox.scrollTop = chatBox.scrollHeight;
+      } catch {
+        chatBox.innerHTML = '<p>Failed to load chat history.</p>';
+      }
+    }
+
+    function addMessage(sender, text) {
+      const div = document.createElement('div');
+      div.classList.add('message', sender);
+      div.textContent = text;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    inputForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = messageInput.value.trim();
+      if (!msg) return;
+      addMessage('user', msg);
+      messageInput.value = '';
+      messageInput.focus();
+
+      try {
+        const res = await fetch('/ai-response', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, message: msg }),
+        });
+        if (!res.ok) throw new Error('Failed to get response');
+        const reply = await res.text();
+        addMessage('bot', reply);
+      } catch {
+        addMessage('bot', 'Sorry, AI is offline. Try again later.');
+      }
+    });
+
+    loadChatHistory();
+  </script>
+</body>
+</html>
