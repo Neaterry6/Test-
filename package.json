@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js"
   },
-  "author": "Your Name",
+  "author": "broken titan",
   "license": "MIT",
   "dependencies": {
     "axios": "^1.4.0",
