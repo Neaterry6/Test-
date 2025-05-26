@@ -30,7 +30,8 @@ async function loadChatHistory() {
   container.innerHTML = 'Loading chat history...';
 
   try {
-    const res = await fetch(`/history/${encodeURIComponent(username)}`);
+    // FIXED: Correct history fetch URL
+    const res = await fetch(`/history?username=${encodeURIComponent(username)}`);
     if (!res.ok) throw new Error('Failed to fetch history');
     const history = await res.json();
     container.innerHTML = '';
@@ -42,12 +43,13 @@ async function loadChatHistory() {
       const div = document.createElement('div');
       div.classList.add('message');
       div.classList.add(msg.from);
-      div.textContent = msg.text;
+      // FIXED: Use msg.message instead of msg.text (since your server sends {from, message})
+      div.textContent = msg.message;
       container.appendChild(div);
     });
-    // Scroll to bottom
     container.scrollTop = container.scrollHeight;
   } catch (err) {
+    console.error(err);
     container.innerHTML = '<p>Failed to load chat history.</p>';
   }
 }
@@ -80,6 +82,7 @@ async function sendMessage(event) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, message: msg })
     });
+
     const botMsg = await res.text();
 
     const botDiv = document.createElement('div');
@@ -88,6 +91,7 @@ async function sendMessage(event) {
     container.appendChild(botDiv);
     container.scrollTop = container.scrollHeight;
   } catch (err) {
+    console.error(err);
     const botDiv = document.createElement('div');
     botDiv.classList.add('message', 'bot');
     botDiv.textContent = 'Oops, something went wrong.';
@@ -112,4 +116,4 @@ document.addEventListener('DOMContentLoaded', () => {
   if (chatForm) {
     chatForm.addEventListener('submit', sendMessage);
   }
-})
+});
