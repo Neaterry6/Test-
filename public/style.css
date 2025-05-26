@@ -1,0 +1,129 @@
+/* General */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #fff0f6;
+  color: #222;
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.container {
+  max-width: 700px;
+  margin: 40px auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+h1, h2 {
+  color: #ff4081;
+}
+
+button {
+  background-color: #ff4081;
+  border: none;
+  color: white;
+  font-weight: 600;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #e73370;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin: 0.8rem 0;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+a {
+  color: #ff4081;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Chat */
+#chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 75vh;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 1rem;
+  overflow-y: auto;
+  background: #fff5f9;
+  margin-bottom: 1rem;
+}
+
+.message {
+  max-width: 80%;
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.8rem;
+  border-radius: 18px;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.message.user {
+  align-self: flex-end;
+  background-color: #ff79a8;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.message.bot {
+  align-self: flex-start;
+  background-color: #ffbecf;
+  color: #5a0e2a;
+  border-bottom-left-radius: 4px;
+}
+
+/* Dark Mode */
+body.dark-mode {
+  background-color: #222;
+  color: #eee;
+}
+
+body.dark-mode .container {
+  background-color: #333;
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode input, 
+body.dark-mode textarea {
+  background-color: #555;
+  border: 1px solid #777;
+  color: #eee;
+}
+
+body.dark-mode a {
+  color: #ff79a8;
+}
+
+body.dark-mode #chat-container {
+  background: #2a2a2a;
+  border: 1px solid #555;
+}
+
+body.dark-mode .message.user {
+  background-color: #ff5c8d;
+  color: white;
+}
+
+body.dark-mode .message.bot {
+  background-color: #ff87ab;
+  color: #330015;
