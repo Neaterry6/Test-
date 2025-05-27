@@ -34,11 +34,10 @@
       color: var(--color-light-text);
     }
 
-    /* Header */
     header {
       display: flex;
       align-items: center;
-      justify-content: center; /* Center title */
+      justify-content: center;
       padding: 1rem 1rem 0.5rem 1rem;
       position: sticky;
       top: 0;
@@ -56,11 +55,10 @@
       margin: 0;
     }
 
-    /* Menu container moved to top-left */
     .menu-container {
       position: absolute;
       left: 1rem;
-      top: 1.25rem; /* vertically aligned with header */
+      top: 1.25rem;
       display: flex;
       align-items: center;
       gap: 0.5rem;
@@ -81,7 +79,6 @@
       color: white;
     }
 
-    /* Menu dropdown */
     #menuDropdown {
       position: absolute;
       top: 2.8rem;
@@ -115,7 +112,6 @@
       color: white;
     }
 
-    /* Username display */
     #usernameDisplay {
       text-align: center;
       padding: 0.5rem 1rem;
@@ -124,21 +120,16 @@
       user-select: none;
     }
 
-    /* Chat box */
     #chatBox {
       flex: 1;
       overflow-y: auto;
-      padding: 1rem 1rem 1rem 1rem;
+      padding: 1rem;
       display: flex;
       flex-direction: column;
       gap: 0.75rem;
       scroll-behavior: smooth;
     }
-    body.light-mode #chatBox {
-      /* Optional: lighter background */
-    }
 
-    /* Messages */
     .message {
       max-width: 75%;
       padding: 0.75rem 1rem;
@@ -149,65 +140,33 @@
       box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
       font-size: 1rem;
       user-select: text;
-      transition: background-color 0.3s ease, color 0.3s ease;
     }
-    /* User messages (right) */
     .message.user {
       background-color: var(--primary-color);
       color: white;
       align-self: flex-end;
-      border-bottom-right-radius: 4px;
-      box-shadow: 0 2px 6px rgb(16 163 127 / 0.5);
     }
-    body.light-mode .message.user {
-      background-color: var(--primary-color);
-      color: white;
-      box-shadow: 0 2px 6px rgb(16 163 127 / 0.7);
-    }
-    /* Bot messages (left) */
     .message.bot {
       background-color: #2a2a2a;
       color: #ddd;
       align-self: flex-start;
-      border-bottom-left-radius: 4px;
-      min-height: 1.5em;
-    }
-    body.light-mode .message.bot {
-      background-color: #eee;
-      color: #222;
     }
 
-    /* Input form */
     #inputForm {
       display: flex;
-      padding: 0.5rem 1rem 1rem 1rem;
+      padding: 0.5rem 1rem;
       background: inherit;
       border-top: 1px solid #3334;
       position: sticky;
       bottom: 0;
-      z-index: 10;
-    }
-    body.light-mode #inputForm {
-      border-color: #ccc;
     }
     #messageInput {
       flex: 1;
       padding: 0.75rem 1rem;
       border-radius: 9999px;
       border: 1px solid #444;
-      font-size: 1rem;
       background-color: #222;
       color: #eee;
-      outline-offset: 2px;
-      transition: background-color 0.3s ease, color 0.3s ease;
-    }
-    body.light-mode #messageInput {
-      background-color: #f9f9f9;
-      border: 1px solid #ccc;
-      color: #222;
-    }
-    #messageInput::placeholder {
-      color: #aaa;
     }
     #sendBtn {
       margin-left: 0.75rem;
@@ -218,225 +177,88 @@
       padding: 0 1.5rem;
       font-weight: 700;
       font-size: 1rem;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-    #sendBtn:hover {
-      background-color: var(--primary-color-hover);
-    }
-
-    /* Back button */
-    #backBtn {
-      display: none;
-      position: sticky;
-      top: 0.5rem;
-      left: 1rem;
-      background-color: var(--primary-color);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 0.4rem 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      z-index: 30;
-      margin-bottom: 0.5rem;
-    }
-    #backBtn:hover {
-      background-color: var(--primary-color-hover);
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>Toxic Baby AI Chat</h1>
-    <div class="menu-container">
-      <button id="menuBtn" aria-haspopup="true" aria-expanded="false" title="Menu">☰</button>
-      <button id="toggleDark" aria-label="Toggle Light/Dark Mode">Light Mode</button>
-      <div id="menuDropdown" role="menu" aria-hidden="true">
-        <button id="profileBtn" role="menuitem">Profile</button>
-        <button id="chatHistoryBtn" role="menuitem">Chat History</button>
-      </div>
+<header>
+  <h1>Toxic Baby AI Chat</h1>
+  <div class="menu-container">
+    <button id="menuBtn">☰</button>
+    <button id="toggleDark">Light Mode</button>
+    <div id="menuDropdown">
+      <button id="profileBtn">Profile</button>
+      <button id="chatHistoryBtn">Chat History</button>
+      <button id="logoutBtn">Logout</button>
     </div>
-  </header>
+  </div>
+</header>
 
-  <button id="backBtn" aria-label="Back to Chat">← Back</button>
+<div id="usernameDisplay"></div>
+<div id="chatBox"></div>
 
-  <div id="usernameDisplay"></div>
+<form id="inputForm">
+  <input type="text" id="messageInput" placeholder="Say something..." required />
+  <button type="submit" id="sendBtn">Send</button>
+</form>
 
-  <div id="chatBox" role="log" aria-live="polite" aria-relevant="additions"></div>
+<script>
+  const username = new URLSearchParams(window.location.search).get('username') || 'Guest';
+  const usernameDisplay = document.getElementById('usernameDisplay');
+  usernameDisplay.textContent = `Logged in as: ${username}`;
 
-  <form id="inputForm" autocomplete="off" aria-label="Send message form">
-    <input
-      type="text"
-      id="messageInput"
-      placeholder="Say something..."
-      autocomplete="off"
-      required
-      aria-required="true"
-      aria-label="Message input"
-    />
-    <button type="submit" id="sendBtn" aria-label="Send message">Send</button>
-  </form>
+  const chatBox = document.getElementById('chatBox');
+  const inputForm = document.getElementById('inputForm');
+  const messageInput = document.getElementById('messageInput');
+  const profileBtn = document.getElementById('profileBtn');
+  const chatHistoryBtn = document.getElementById('chatHistoryBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
 
-  <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const username = urlParams.get('username');
-
-    if (!username) {
-      alert('No username found. Please login first.');
-      window.location.href = '/login.html';
-    }
-
-    // Detect if we are on chat page or profile/chat-history page by URL path
-    const path = window.location.pathname;
-    const isChatPage = path.endsWith('chat.html') || path === '/' || path === '/index.html';
-
-    const usernameDisplay = document.getElementById('usernameDisplay');
-const chatBox = document.getElementById('chatBox');
-const inputForm = document.getElementById('inputForm');
-const messageInput = document.getElementById('messageInput');
-
-const menuBtn = document.getElementById('menuBtn');
-const menuDropdown = document.getElementById('menuDropdown');
-const profileBtn = document.getElementById('profileBtn');
-const chatHistoryBtn = document.getElementById('chatHistoryBtn');
-const toggleDark = document.getElementById('toggleDark');
-const backBtn = document.getElementById('backBtn');
-
-// Show username at top
-usernameDisplay.textContent = `Logged in as: ${username}`;
-
-// Handle dark/light mode toggle and remember preference
-function setDarkMode(enabled) {
-  if (enabled) {
-    document.body.classList.remove('light-mode');
-    toggleDark.textContent = 'Light Mode';
-    localStorage.setItem('darkMode', 'true');
-  } else {
-    document.body.classList.add('light-mode');
-    toggleDark.textContent = 'Dark Mode';
-    localStorage.setItem('darkMode', 'false');
-  }
-}
-
-toggleDark.addEventListener('click', () => {
-  const isDark = !document.body.classList.contains('light-mode');
-  setDarkMode(!isDark);
-});
-
-// On load set mode from localStorage or default dark
-const darkPref = localStorage.getItem('darkMode');
-setDarkMode(darkPref === null ? true : darkPref === 'true');
-
-// Menu dropdown toggle
-menuBtn.addEventListener('click', () => {
-  const shown = menuDropdown.style.display === 'flex';
-  menuDropdown.style.display = shown ? 'none' : 'flex';
-  menuBtn.setAttribute('aria-expanded', !shown);
-});
-
-// Clicking outside closes menu
-document.addEventListener('click', (e) => {
-  if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
-    menuDropdown.style.display = 'none';
-    menuBtn.setAttribute('aria-expanded', false);
-  }
-});
-
-// Get the username from URL or default to 'Guest'
-const urlParams = new URLSearchParams(window.location.search);
-const username = urlParams.get('username') || 'Guest';
-
-// Buttons
-const profileBtn = document.getElementById('profileBtn');
-const chatHistoryBtn = document.getElementById('chatHistoryBtn');
-const backBtn = document.getElementById('backBtn');
-
-// Navigate to profile.html and chat-history.html with username param
-if (profileBtn) {
   profileBtn.addEventListener('click', () => {
     window.location.href = `profile.html?username=${encodeURIComponent(username)}`;
   });
-}
 
-if (chatHistoryBtn) {
   chatHistoryBtn.addEventListener('click', () => {
     window.location.href = `chat-history.html?username=${encodeURIComponent(username)}`;
   });
-}
 
-// Show back button only if NOT on chat page
-const currentPath = window.location.pathname;
-const isChatPage = currentPath.endsWith('index.html') || currentPath.endsWith('chat.html') || currentPath === '/' || currentPath === '';
-if (backBtn) {
-  backBtn.style.display = isChatPage ? 'none' : 'inline-block';
-
-  // Back button returns to index.html with username param
-  backBtn.addEventListener('click', () => {
-    window.location.href = `index.html?username=${encodeURIComponent(username)}`;
+  logoutBtn.addEventListener('click', () => {
+    localStorage.clear();
+    window.location.href = '/login.html';
   });
-}
 
-// Function to append a user message to chat
-function appendUserMessage(text) {
-  const msgEl = document.createElement('div');
-  msgEl.classList.add('message', 'user');
-  msgEl.textContent = text;
-  chatBox.appendChild(msgEl);
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
+  inputForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const message = messageInput.value.trim();
+    if (!message) return;
 
-// Function to append a user message to chat
-function appendUserMessage(text) {
-  const msgEl = document.createElement('div');
-  msgEl.classList.add('message', 'user');
-  msgEl.textContent = text;
-  chatBox.appendChild(msgEl);
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
+    const userMessage = document.createElement('div');
+    userMessage.className = 'message user';
+    userMessage.textContent = message;
+    chatBox.appendChild(userMessage);
 
-// Function to append a bot message instantly (no typing animation)
-function appendBotMessage(text) {
-  const msgEl = document.createElement('div');
-  msgEl.classList.add('message', 'bot');
-  msgEl.textContent = text;
-  chatBox.appendChild(msgEl);
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
+    try {
+      const response = await fetch('/api', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: username, message }),
+      });
+      const data = await response.json();
 
-// Send message handler
-inputForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const message = messageInput.value.trim();
-  if (!message) return;
+      const botMessage = document.createElement('div');
+      botMessage.className = 'message bot';
+      botMessage.textContent = data.response || "Sorry, I didn't understand.";
+      chatBox.appendChild(botMessage);
+    } catch (error) {
+      console.error(error);
+      const errorMessage = document.createElement('div');
+      errorMessage.className = 'message bot';
+      errorMessage.textContent = "Error: Couldn't connect to server.";
+      chatBox.appendChild(errorMessage);
+    }
+  });
+</script>
 
-  appendUserMessage(message);
-  messageInput.value = '';
-  messageInput.disabled = true;
-  inputForm.querySelector('button').disabled = true;
-
-  try {
-    // Call your own server's API (on same origin)
-    const response = await fetch(`/api/chat?message=${encodeURIComponent(message)}`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
-    if (!response.ok) throw new Error('Network response was not ok');
-
-    const data = await response.json();
-    const botReply = data.reply || 'Sorry, I could not understand that.';
-
-    appendBotMessage(botReply);
-
-  } catch (error) {
-    appendBotMessage('Error: Could not get response.');
-    console.error('Fetch error:', error);
-  } finally {
-    messageInput.disabled = false;
-    inputForm.querySelector('button').disabled = false;
-    messageInput.focus();
-  }
-});
+</body>
+</html>
