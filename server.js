@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -10,13 +11,26 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// File paths
+const usersFile = path.join(__dirname, 'data', 'users.json');
+const historyFile = path.join(__dirname, 'data', 'history.json');
+
+// Load users and chat history from files or initialize
+let users = {};
+let chatHistory = {};
+
+if (fs.existsSync(usersFile)) {
+  users = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
+}
+
+if (fs.existsSync(historyFile)) {
+  chatHistory = JSON.parse(fs.readFileSync(historyFile, 'utf8'));
+}
+
 // Redirect root to login page
 app.get('/', (req, res) => {
   res.redirect('/login.html');
 });
-
-let users = {};
-let chatHistory = {};
 
 // Serve chat.html explicitly
 app.get('/chat.html', (req, res) => {
@@ -31,6 +45,11 @@ app.post('/signup', (req, res) => {
 
   users[username] = password;
   chatHistory[username] = [];
+
+  // Save to file
+  fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+  fs.writeFileSync(historyFile, JSON.stringify(chatHistory, null, 2));
+
   res.redirect('/login.html');
 });
 
@@ -45,17 +64,21 @@ app.post('/login', (req, res) => {
   res.status(401).send('Invalid username or password.');
 });
 
-// AI response route (POST based on your previous use case)
+// AI response route
 app.post('/ai-response', async (req, res) => {
   const { message, username } = req.body;
   if (!message || !username) return res.status(400).send("Missing data.");
 
   try {
     if (!chatHistory[username]) chatHistory[username] = [];
+
+    // Save user message
     chatHistory[username].push({ from: 'user', message });
+    fs.writeFileSync(historyFile, JSON.stringify(chatHistory, null, 2));
 
     const msgLower = message.toLowerCase();
 
+    // Play song
     if (msgLower.startsWith("play me")) {
       const song = message.replace(/play me/i, "").trim();
       if (!song) return res.send("Please specify a song name.");
@@ -68,6 +91,7 @@ app.post('/ai-response', async (req, res) => {
       return audioStream.data.pipe(res);
     }
 
+    // Send video
     if (msgLower.startsWith("send me video")) {
       const query = message.replace(/send me video/i, "").trim();
       if (!query) return res.send("Please specify a video query.");
@@ -80,6 +104,7 @@ app.post('/ai-response', async (req, res) => {
       return videoStream.data.pipe(res);
     }
 
+    // Generate image
     if (msgLower.startsWith("generate image")) {
       const prompt = message.replace(/generate image/i, "").trim();
       if (!prompt) return res.send("Please specify an image prompt.");
@@ -95,6 +120,8 @@ app.post('/ai-response', async (req, res) => {
     // Default AI chat
     const { data } = await axios.get(`https://new-gf-ai.onrender.com/babe?query=${encodeURIComponent(message)}`);
     chatHistory[username].push({ from: 'bot', message: data });
+    fs.writeFileSync(historyFile, JSON.stringify(chatHistory, null, 2));
+
     res.send(data);
 
   } catch (err) {
@@ -103,7 +130,7 @@ app.post('/ai-response', async (req, res) => {
   }
 });
 
-// Add this new GET endpoint for your /api/chat for your front-end script fetch
+// Front-end fetch AI reply
 app.get('/api/chat', async (req, res) => {
   const message = req.query.message;
   if (!message) return res.status(400).json({ reply: 'No message received.' });
@@ -117,11 +144,23 @@ app.get('/api/chat', async (req, res) => {
   }
 });
 
-// Chat history route
+// Get chat history for a user
 app.get('/history', (req, res) => {
   const username = req.query.username;
   if (!username) return res.status(400).json({ error: "No username provided." });
+
   res.json(chatHistory[username] || []);
+});
+
+// Optional: Clear chat history for a user (for testing)
+app.get('/clear-history', (req, res) => {
+  const username = req.query.username;
+  if (!username) return res.status(400).json({ error: "No username provided." });
+
+  chatHistory[username] = [];
+  fs.writeFileSync(historyFile, JSON.stringify(chatHistory, null, 2));
+
+  res.json({ success: true, message: `History cleared for ${username}` });
 });
 
 // Start server
