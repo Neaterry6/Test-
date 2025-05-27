@@ -344,27 +344,39 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Navigate to profile.html and chatHistory.html with username param
-profileBtn.addEventListener('click', () => {
-  window.location.href = `profile.html?username=${encodeURIComponent(username)}`;
-});
-chatHistoryBtn.addEventListener('click', () => {
-  window.location.href = `chat-history.html?username=${encodeURIComponent(username)}`;
-});
+// Get the username from URL or default to 'Guest'
+const urlParams = new URLSearchParams(window.location.search);
+const username = urlParams.get('username') || 'Guest';
 
-// Show back button only if NOT chat page
-const currentPath = window.location.pathname;
-const isChat = currentPath.endsWith('index.html') || currentPath.endsWith('chat.html') || currentPath === '/' || currentPath === '';
-if (!isChat) {
-  backBtn.style.display = 'inline-block';
-} else {
-  backBtn.style.display = 'none';
+// Buttons
+const profileBtn = document.getElementById('profileBtn');
+const chatHistoryBtn = document.getElementById('chatHistoryBtn');
+const backBtn = document.getElementById('backBtn');
+
+// Navigate to profile.html and chat-history.html with username param
+if (profileBtn) {
+  profileBtn.addEventListener('click', () => {
+    window.location.href = `profile.html?username=${encodeURIComponent(username)}`;
+  });
 }
 
-// Back button goes back to chat page with username param
-backBtn.addEventListener('click', () => {
-  window.location.href = `index.html?username=${encodeURIComponent(username)}`;
-});
+if (chatHistoryBtn) {
+  chatHistoryBtn.addEventListener('click', () => {
+    window.location.href = `chat-history.html?username=${encodeURIComponent(username)}`;
+  });
+}
+
+// Show back button only if NOT on chat page
+const currentPath = window.location.pathname;
+const isChatPage = currentPath.endsWith('index.html') || currentPath.endsWith('chat.html') || currentPath === '/' || currentPath === '';
+if (backBtn) {
+  backBtn.style.display = isChatPage ? 'none' : 'inline-block';
+
+  // Back button returns to index.html with username param
+  backBtn.addEventListener('click', () => {
+    window.location.href = `index.html?username=${encodeURIComponent(username)}`;
+  });
+}
 
 // Function to append a user message to chat
 function appendUserMessage(text) {
