@@ -4,11 +4,107 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Profile - Toxic Baby AI</title>
-  <link rel="stylesheet" href="styles.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap');
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #1e1e2f;
+      color: #f0f0f5;
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background: #2c2c47;
+      padding: 30px 40px;
+      border-radius: 15px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+      font-weight: 600;
+      font-size: 2.4rem;
+      letter-spacing: 1.2px;
+      color: #f7c59f;
+    }
+
+    #avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: #555a77 url('https://i.pravatar.cc/120') center/cover no-repeat;
+      margin: 0 auto 25px;
+      box-shadow: 0 4px 15px rgba(247,197,159,0.6);
+      border: 4px solid #f7c59f;
+      transition: transform 0.3s ease;
+    }
+    #avatar:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 25px rgba(247,197,159,0.9);
+    }
+
+    #profile-info p {
+      font-size: 1.1rem;
+      margin: 15px 0;
+      color: #d9d9e3;
+      letter-spacing: 0.03em;
+    }
+
+    #profile-info strong {
+      color: #f7c59f;
+    }
+
+    button {
+      margin-top: 35px;
+      background: #f7c59f;
+      border: none;
+      color: #2c2c47;
+      padding: 12px 30px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(247,197,159,0.6);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    button:hover {
+      background: #f0b55a;
+      box-shadow: 0 6px 20px rgba(240,181,90,0.9);
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 25px 20px;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+      #avatar {
+        width: 100px;
+        height: 100px;
+        margin-bottom: 20px;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="container">
     <h1>Your Profile</h1>
+    <div id="avatar" aria-label="User avatar"></div>
     <div id="profile-info">
       <p><strong>Username:</strong> <span id="username"></span></p>
       <p><strong>Account Created:</strong> <span id="createdAt"></span></p>
@@ -35,6 +131,11 @@
       }
 
       document.getElementById('username').textContent = username;
+
+      // Set avatar dynamically using username as seed for avatar service
+      // fallback avatar if no custom image available
+      const avatarDiv = document.getElementById('avatar');
+      avatarDiv.style.backgroundImage = `url('https://i.pravatar.cc/150?u=${encodeURIComponent(username)}')`;
 
       try {
         const res = await fetch(`/profile/${encodeURIComponent(username)}`);
