@@ -1,4 +1,3 @@
-
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
@@ -18,6 +17,11 @@ app.get('/', (req, res) => {
 
 let users = {};
 let chatHistory = {};
+
+// Serve chat.html explicitly
+app.get('/chat.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'chat.html'));
+});
 
 // Signup route
 app.post('/signup', (req, res) => {
@@ -41,7 +45,7 @@ app.post('/login', (req, res) => {
   res.status(401).send('Invalid username or password.');
 });
 
-// AI response route (stream media or text)
+// AI response route (POST based on your previous use case)
 app.post('/ai-response', async (req, res) => {
   const { message, username } = req.body;
   if (!message || !username) return res.status(400).send("Missing data.");
@@ -52,11 +56,10 @@ app.post('/ai-response', async (req, res) => {
 
     const msgLower = message.toLowerCase();
 
-    // Play me song
     if (msgLower.startsWith("play me")) {
       const song = message.replace(/play me/i, "").trim();
       if (!song) return res.send("Please specify a song name.");
-      
+
       const apiRes = await axios.get(`https://spotify-api-t6b7.onrender.com/play?song=${encodeURIComponent(song)}`);
       const audioUrl = apiRes.data.audioUrl || apiRes.data.url || apiRes.data;
 
@@ -65,11 +68,10 @@ app.post('/ai-response', async (req, res) => {
       return audioStream.data.pipe(res);
     }
 
-    // Send me video
     if (msgLower.startsWith("send me video")) {
       const query = message.replace(/send me video/i, "").trim();
       if (!query) return res.send("Please specify a video query.");
-      
+
       const apiRes = await axios.get(`https://spotify-api-t6b7.onrender.com/video?search=${encodeURIComponent(query)}`);
       const videoUrl = apiRes.data.videoUrl || apiRes.data.url || apiRes.data;
 
@@ -78,11 +80,10 @@ app.post('/ai-response', async (req, res) => {
       return videoStream.data.pipe(res);
     }
 
-    // Generate image
     if (msgLower.startsWith("generate image")) {
       const prompt = message.replace(/generate image/i, "").trim();
       if (!prompt) return res.send("Please specify an image prompt.");
-      
+
       const apiRes = await axios.get(`https://smfahim.xyz/creartai?prompt=${encodeURIComponent(prompt)}`);
       const imageUrl = apiRes.data.imageUrl || apiRes.data.url || apiRes.data;
 
@@ -102,6 +103,20 @@ app.post('/ai-response', async (req, res) => {
   }
 });
 
+// Add this new GET endpoint for your /api/chat for your front-end script fetch
+app.get('/api/chat', async (req, res) => {
+  const message = req.query.message;
+  if (!message) return res.status(400).json({ reply: 'No message received.' });
+
+  try {
+    const { data } = await axios.get(`https://new-gf-ai.onrender.com/babe?query=${encodeURIComponent(message)}`);
+    res.json({ reply: data });
+  } catch (err) {
+    console.error("Error in /api/chat:", err.message || err);
+    res.status(500).json({ reply: 'Error fetching AI response.' });
+  }
+});
+
 // Chat history route
 app.get('/history', (req, res) => {
   const username = req.query.username;
@@ -109,5 +124,5 @@ app.get('/history', (req, res) => {
   res.json(chatHistory[username] || []);
 });
 
-// Server start
+// Start server
 app.listen(port, () => console.log(`Toxic Baby AI running at http://localhost:${port}`));
