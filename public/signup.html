@@ -6,61 +6,94 @@
   <title>Sign Up - Toxic Baby AI</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
+    /* General Styles */
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #ffe6f0;
+      background-color: #121212; /* Black background */
+      color: #eee; /* Light text color */
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
     }
+
     form {
-      background: white;
+      background: #222; /* Dark form background */
       padding: 2rem;
       border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
       width: 320px;
       text-align: center;
+      animation: fadeIn 0.8s ease-in-out; /* Smooth fade-in animation */
     }
+
     h2 {
       margin-bottom: 1.5rem;
-      color: #ff4081;
+      color: #10a37f; /* Primary green color */
     }
+
     input {
       width: 100%;
       padding: 0.7rem;
       margin: 0.5rem 0 1.2rem 0;
-      border: 1px solid #ddd;
+      border: 1px solid #444; /* Dark border */
       border-radius: 6px;
       font-size: 1rem;
+      background-color: #333; /* Dark input background */
+      color: #eee; /* Light text color */
+      transition: border-color 0.3s ease;
     }
+
+    input:focus {
+      border-color: #10a37f; /* Green border on focus */
+      outline: none; /* Remove default outline */
+    }
+
     button {
       width: 100%;
       padding: 0.7rem;
-      background-color: #ff4081;
+      background-color: #10a37f; /* Primary green color */
       border: none;
       color: white;
       font-weight: 600;
       font-size: 1.1rem;
       border-radius: 6px;
       cursor: pointer;
-      transition: background-color 0.3s ease;
+      transition: background-color 0.3s ease, transform 0.2s ease;
     }
+
     button:hover {
-      background-color: #e73370;
+      background-color: #0d7a63; /* Darker green hover effect */
+      transform: scale(1.05); /* Slight zoom effect */
     }
+
     p {
       margin-top: 1rem;
       font-size: 0.9rem;
+      color: #bbb; /* Lighter text color */
     }
+
     p a {
-      color: #ff4081;
+      color: #10a37f; /* Primary green link */
       text-decoration: none;
       font-weight: 600;
+      transition: color 0.2s ease;
     }
+
     p a:hover {
-      text-decoration: underline;
+      color: #0d7a63; /* Darker green hover effect */
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
   </style>
 </head>
