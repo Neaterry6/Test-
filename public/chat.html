@@ -140,6 +140,7 @@
       box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
       font-size: 1rem;
       user-select: text;
+      position: relative;
     }
     .message.user {
       background-color: var(--primary-color);
@@ -150,6 +151,29 @@
       background-color: #2a2a2a;
       color: #ddd;
       align-self: flex-start;
+    }
+    .timestamp {
+      font-size: 0.8rem;
+      color: #aaa;
+      text-align: right;
+      margin-top: 0.5rem;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background-color: var(--primary-color-hover);
+      color: white;
+      border: none;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      opacity: 0.8;
+      transition: opacity 0.2s ease;
+    }
+    .copy-btn:hover {
+      opacity: 1;
     }
 
     #inputForm {
@@ -211,32 +235,39 @@
   const chatBox = document.getElementById('chatBox');
   const inputForm = document.getElementById('inputForm');
   const messageInput = document.getElementById('messageInput');
-  const profileBtn = document.getElementById('profileBtn');
-  const chatHistoryBtn = document.getElementById('chatHistoryBtn');
-  const logoutBtn = document.getElementById('logoutBtn');
 
-  profileBtn.addEventListener('click', () => {
-    window.location.href = `profile.html?username=${encodeURIComponent(username)}`;
-  });
+  function appendMessage(text, sender) {
+    const messageEl = document.createElement('div');
+    messageEl.className = `message ${sender}`;
+    messageEl.textContent = text;
 
-  chatHistoryBtn.addEventListener('click', () => {
-    window.location.href = `chat-history.html?username=${encodeURIComponent(username)}`;
-  });
+    const timestampEl = document.createElement('div');
+    timestampEl.className = 'timestamp';
+    timestampEl.textContent = new Date().toLocaleTimeString();
 
-  logoutBtn.addEventListener('click', () => {
-    localStorage.clear();
-    window.location.href = '/login.html';
-  });
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(text).then(() => {
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => (copyBtn.textContent = 'Copy'), 2000);
+      });
+    });
+
+    messageEl.appendChild(copyBtn);
+    messageEl.appendChild(timestampEl);
+    chatBox.appendChild(messageEl);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
 
   inputForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const message = messageInput.value.trim();
     if (!message) return;
 
-    const userMessage = document.createElement('div');
-    userMessage.className = 'message user';
-    userMessage.textContent = message;
-    chatBox.appendChild(userMessage);
+    appendMessage(message, 'user');
+    messageInput.value = '';
 
     try {
       const response = await fetch('/api', {
@@ -245,17 +276,10 @@
         body: JSON.stringify({ user: username, message }),
       });
       const data = await response.json();
-
-      const botMessage = document.createElement('div');
-      botMessage.className = 'message bot';
-      botMessage.textContent = data.response || "Sorry, I didn't understand.";
-      chatBox.appendChild(botMessage);
+      appendMessage(data.response || "Sorry, I didn't understand.", 'bot');
     } catch (error) {
       console.error(error);
-      const errorMessage = document.createElement('div');
-      errorMessage.className = 'message bot';
-      errorMessage.textContent = "Error: Couldn't connect to server.";
-      chatBox.appendChild(errorMessage);
+      appendMessage("Error: Couldn't connect to server.", 'bot');
     }
   });
 </script>
