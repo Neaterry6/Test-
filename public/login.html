@@ -6,65 +6,118 @@
   <title>Login - Toxic Baby AI</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
+    /* General Styles */
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #ffecf1;
+      background-color: #121212; /* Black background */
+      color: #eee; /* Light text color */
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
+      overflow: hidden; /* Prevent scrolling during animation */
     }
     form {
-      background: white;
+      background: #222; /* Dark form background */
       padding: 2rem;
       border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
       width: 320px;
       text-align: center;
+      opacity: 0; /* Initially hidden (will fade in) */
+      transition: opacity 0.7s ease;
     }
     h2 {
       margin-bottom: 1.5rem;
-      color: #ff4081;
+      color: #10a37f; /* Primary green color */
     }
     input {
       width: 100%;
       padding: 0.7rem;
       margin: 0.5rem 0 1.2rem 0;
-      border: 1px solid #ddd;
+      border: 1px solid #444; /* Dark border */
       border-radius: 6px;
       font-size: 1rem;
+      background-color: #333; /* Dark input background */
+      color: #eee; /* Light text color */
+    }
+    input::placeholder {
+      color: #aaa; /* Lighter placeholder color */
     }
     button {
       width: 100%;
       padding: 0.7rem;
-      background-color: #ff4081;
+      background-color: #10a37f; /* Primary green color */
       border: none;
       color: white;
       font-weight: 600;
       font-size: 1.1rem;
       border-radius: 6px;
       cursor: pointer;
-      transition: background-color 0.3s ease;
+      transition: background-color 0.3s ease, transform 0.2s ease;
     }
     button:hover {
-      background-color: #e73370;
+      background-color: #0d7a63; /* Darker green hover effect */
+      transform: scale(1.05); /* Slight zoom effect */
     }
     p {
       margin-top: 1rem;
       font-size: 0.9rem;
+      color: #ddd; /* Light text color */
     }
     p a {
-      color: #ff4081;
+      color: #10a37f; /* Primary green link */
       text-decoration: none;
       font-weight: 600;
     }
     p a:hover {
       text-decoration: underline;
     }
+
+    /* Loading Animation */
+    #loading {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #121212; /* Black background */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000; /* Above everything else */
+    }
+    #loading img {
+      width: 100px;
+      height: 100px;
+      animation: spin 1.5s linear infinite; /* Spinning animation */
+    }
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Hide loading animation and show form */
+    body.loaded #loading {
+      display: none;
+    }
+    body.loaded form {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
+  <!-- Loading Animation -->
+  <div id="loading">
+    <img src="avatar.png" alt="Loading Avatar" />
+  </div>
+
+  <!-- Login Form -->
   <form method="POST" action="/login">
     <h2>Login to Toxic Baby AI</h2>
     <input name="username" type="text" placeholder="Username" required autofocus />
@@ -72,5 +125,14 @@
     <button type="submit">Login</button>
     <p>Don't have an account? <a href="/signup.html">Sign up</a></p>
   </form>
+
+  <script>
+    // Simulate loading animation and fade-in effect
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.body.classList.add('loaded');
+      }, 1500); // 1.5 seconds delay before showing the form
+    });
+  </script>
 </body>
 </html>
