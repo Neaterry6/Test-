@@ -1,41 +1,196 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Chat History</title>
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css" />
   <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f2f7ff;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    h2 {
+      text-align: center;
+      color: #0077cc;
+      margin-bottom: 20px;
+    }
+    #chat-history {
+      max-width: 700px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      padding: 15px;
+      height: 70vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
     .chat-message {
-      padding: 8px;
-      margin: 6px 0;
-      border-radius: 6px;
+      padding: 10px 14px;
+      border-radius: 20px;
       max-width: 70%;
+      word-wrap: break-word;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      line-height: 1.3;
+      font-size: 1rem;
+      position: relative;
     }
     .sent {
-      background: #d1e7dd;
-      margin-left: auto;
+      background: #cfe9ff;
+      align-self: flex-end;
+      color: #003366;
+      border-bottom-right-radius: 4px;
     }
     .received {
-      background: #f8d7da;
-      margin-right: auto;
+      background: #e4f4e1;
+      align-self: flex-start;
+      color: #245324;
+      border-bottom-left-radius: 4px;
+    }
+    audio, video {
+      margin-top: 8px;
+      max-width: 100%;
+      border-radius: 12px;
+      outline: none;
+    }
+    img {
+      margin-top: 8px;
+      max-width: 100%;
+      border-radius: 12px;
+      display: block;
+    }
+    /* Scrollbar styling */
+    #chat-history::-webkit-scrollbar {
+      width: 8px;
+    }
+    #chat-history::-webkit-scrollbar-thumb {
+      background-color: #0077cc;
+      border-radius: 20px;
+    }
+    #chat-history::-webkit-scrollbar-track {
+      background: #e1eaff;
+    }
+    /* Responsive */
+    @media (max-width: 768px) {
+      #chat-history {
+        max-width: 100%;
+        height: 60vh;
+      }
     }
   </style>
 </head>
 <body>
 
-<h2>Chat History</h2>
-<div id="chat-history"></div>
+<h2>Your Chat History</h2>
+<div id="chat-history">Loading chat history...</div>
 
 <script>
-  const chatHistory = JSON.parse(localStorage.getItem("chatHistory")) || [];
+  // Utility: Validate URL
+  function isValidUrl(string) {
+    try {
+      new URL(string);
+      return true;
+    } catch {
+      return false;
+    }
+  }
 
-  const container = document.getElementById("chat-history");
-  chatHistory.forEach(msg => {
-    const div = document.createElement("div");
-    div.className = `chat-message ${msg.type}`;
-    div.innerText = msg.text;
-    container.appendChild(div);
-  });
+  // Detect media type from URL extension
+  function detectMediaType(url) {
+    if (!isValidUrl(url)) return null;
+    const ext = url.split('.').pop().toLowerCase();
+    if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) return 'audio';
+    if (['mp4', 'webm', 'ogg'].includes(ext)) return 'video';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)) return 'image';
+    return null;
+  }
+
+  // Create message element (with media support)
+  function createMessageElement(msgObj) {
+    const div = document.createElement('div');
+    div.classList.add('chat-message', msgObj.from === 'user' ? 'sent' : 'received');
+
+    // Check if message contains a URL (media)
+    const urlMatch = msgObj.message.match(/(https?:\/\/[^\s]+)/);
+    if (urlMatch) {
+      const url = urlMatch[0];
+      const mediaType = detectMediaType(url);
+
+      // Text part without URL
+      const text = msgObj.message.replace(url, '').trim();
+      if (text) {
+        const p = document.createElement('p');
+        p.textContent = text;
+        div.appendChild(p);
+      }
+
+      if (mediaType === 'audio') {
+        const audio = document.createElement('audio');
+        audio.src = url;
+        audio.controls = true;
+        div.appendChild(audio);
+      } else if (mediaType === 'video') {
+        const video = document.createElement('video');
+        video.src = url;
+        video.controls = true;
+        div.appendChild(video);
+      } else if (mediaType === 'image') {
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = 'Image';
+        div.appendChild(img);
+      } else {
+        // URL but not recognized media, just show text + url
+        div.textContent = msgObj.message;
+      }
+    } else {
+      div.textContent = msgObj.message;
+    }
+    return div;
+  }
+
+  async function loadChatHistory() {
+    const container = document.getElementById('chat-history');
+
+    // Extract username from URL query param
+    const params = new URLSearchParams(window.location.search);
+    const username = params.get('username');
+    if (!username) {
+      container.textContent = 'Username missing in URL. Cannot load chat history.';
+      return;
+    }
+
+    try {
+      const res = await fetch(`/history?username=${encodeURIComponent(username)}`);
+      if (!res.ok) throw new Error('Failed to fetch chat history');
+      const history = await res.json();
+
+      if (!history.length) {
+        container.textContent = 'No chat history yet. Say hi!';
+        return;
+      }
+
+      container.innerHTML = ''; // Clear loading text
+
+      history.forEach(msgObj => {
+        const msgEl = createMessageElement(msgObj);
+        container.appendChild(msgEl);
+      });
+
+      // Scroll to bottom
+      container.scrollTop = container.scrollHeight;
+    } catch (err) {
+      console.error(err);
+      container.textContent = 'Failed to load chat history. Try again later.';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadChatHistory);
 </script>
 
 </body>
