@@ -15,26 +15,26 @@ app.use(express.static(path.join(__dirname, 'public')));
 const usersFile = path.join(__dirname, 'data', 'users.json');
 const historyFile = path.join(__dirname, 'data', 'history.json');
 
-// Load users and chat history from files or initialize
-let users = {};
-let chatHistory = {};
-
-if (fs.existsSync(usersFile)) {
-  users = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
-}
-
-if (fs.existsSync(historyFile)) {
-  chatHistory = JSON.parse(fs.readFileSync(historyFile, 'utf8'));
-}
+// Load users and chat history or initialize them
+let users = fs.existsSync(usersFile) ? JSON.parse(fs.readFileSync(usersFile, 'utf8')) : {};
+let chatHistory = fs.existsSync(historyFile) ? JSON.parse(fs.readFileSync(historyFile, 'utf8')) : {};
 
 // Redirect root to login page
 app.get('/', (req, res) => {
   res.redirect('/login.html');
 });
 
-// Serve chat.html explicitly
+// Serve static HTML files explicitly
 app.get('/chat.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'chat.html'));
+});
+
+app.get('/profile.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'profile.html'));
+});
+
+app.get('/chat-history.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'chat-history.html'));
 });
 
 // Signup route
@@ -67,9 +67,6 @@ app.post('/login', (req, res) => {
 // AI response route
 app.post('/ai-response', async (req, res) => {
   const { message, username } = req.body;
-  if (!message || !username) return res.status(400).send("Missing data.");
-
-  try {
     if (!chatHistory[username]) chatHistory[username] = [];
 
     // Save user message
@@ -152,7 +149,7 @@ app.get('/history', (req, res) => {
   res.json(chatHistory[username] || []);
 });
 
-// Optional: Clear chat history for a user (for testing)
+// Clear chat history for a user
 app.get('/clear-history', (req, res) => {
   const username = req.query.username;
   if (!username) return res.status(400).json({ error: "No username provided." });
