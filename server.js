@@ -41,76 +41,59 @@ app.post('/login', (req, res) => {
   res.status(401).send('Invalid username or password.');
 });
 
-// AI response route (text or media URLs)
+// AI response route (stream media or text)
 app.post('/ai-response', async (req, res) => {
   const { message, username } = req.body;
-  if (!message) return res.status(400).send("No message.");
-  if (!username) return res.status(400).send("No username.");
+  if (!message || !username) return res.status(400).send("Missing data.");
 
   try {
     if (!chatHistory[username]) chatHistory[username] = [];
-    
-    // Save user message
     chatHistory[username].push({ from: 'user', message });
 
     const msgLower = message.toLowerCase();
 
+    // Play me song
     if (msgLower.startsWith("play me")) {
       const song = message.replace(/play me/i, "").trim();
-      if (!song) {
-        const reply = "Please specify a song name.";
-        chatHistory[username].push({ from: 'bot', message: reply });
-        return res.send(reply);
-      }
-
-      // Call your external API to get audio URL
+      if (!song) return res.send("Please specify a song name.");
+      
       const apiRes = await axios.get(`https://spotify-api-t6b7.onrender.com/play?song=${encodeURIComponent(song)}`);
-      // Extract audio URL from response data safely
       const audioUrl = apiRes.data.audioUrl || apiRes.data.url || apiRes.data;
 
-      const reply = `Here's your song: ${audioUrl}`;
-      chatHistory[username].push({ from: 'bot', message: reply });
-      return res.send(reply);
+      const audioStream = await axios.get(audioUrl, { responseType: 'stream' });
+      res.setHeader('Content-Type', 'audio/mpeg');
+      return audioStream.data.pipe(res);
     }
 
+    // Send me video
     if (msgLower.startsWith("send me video")) {
       const query = message.replace(/send me video/i, "").trim();
-      if (!query) {
-        const reply = "Please specify a video search query.";
-        chatHistory[username].push({ from: 'bot', message: reply });
-        return res.send(reply);
-      }
-
+      if (!query) return res.send("Please specify a video query.");
+      
       const apiRes = await axios.get(`https://spotify-api-t6b7.onrender.com/video?search=${encodeURIComponent(query)}`);
       const videoUrl = apiRes.data.videoUrl || apiRes.data.url || apiRes.data;
 
-      const reply = `Here's your video: ${videoUrl}`;
-      chatHistory[username].push({ from: 'bot', message: reply });
-      return res.send(reply);
+      const videoStream = await axios.get(videoUrl, { responseType: 'stream' });
+      res.setHeader('Content-Type', 'video/mp4');
+      return videoStream.data.pipe(res);
     }
 
+    // Generate image
     if (msgLower.startsWith("generate image")) {
       const prompt = message.replace(/generate image/i, "").trim();
-      if (!prompt) {
-        const reply = "Please specify an image prompt.";
-        chatHistory[username].push({ from: 'bot', message: reply });
-        return res.send(reply);
-      }
-
+      if (!prompt) return res.send("Please specify an image prompt.");
+      
       const apiRes = await axios.get(`https://smfahim.xyz/creartai?prompt=${encodeURIComponent(prompt)}`);
       const imageUrl = apiRes.data.imageUrl || apiRes.data.url || apiRes.data;
 
-      const reply = `Here's your image: ${imageUrl}`;
-      chatHistory[username].push({ from: 'bot', message: reply });
-      return res.send(reply);
+      const imageStream = await axios.get(imageUrl, { responseType: 'stream' });
+      res.setHeader('Content-Type', 'image/jpeg');
+      return imageStream.data.pipe(res);
     }
 
     // Default AI chat
     const { data } = await axios.get(`https://new-gf-ai.onrender.com/babe?query=${encodeURIComponent(message)}`);
-
-    // Save AI reply
     chatHistory[username].push({ from: 'bot', message: data });
-
     res.send(data);
 
   } catch (err) {
