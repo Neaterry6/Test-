@@ -174,4 +174,4 @@ document.addEventListener('DOMContentLoaded', () => {
   if (chatForm) {
     chatForm.addEventListener('submit', sendMessage);
   }
-});
+}); 
