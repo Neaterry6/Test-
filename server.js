@@ -15,8 +15,8 @@ app.get('/', (req, res) => {
   res.redirect('/login.html');
 });
 
-let users = {}; // { username: password }
-let chatHistory = {}; // { username: [messages] }
+let users = {};
+let chatHistory = {};
 
 // Signup route
 app.post('/signup', (req, res) => {
@@ -46,41 +46,60 @@ app.post('/ai-response', async (req, res) => {
   try {
     const msgLower = message.toLowerCase();
 
+    // PLAY ME command
     if (msgLower.startsWith("play me")) {
       const song = message.replace(/play me/i, "").trim();
-      chatHistory[username].push({ from: 'user', message });
-      chatHistory[username].push({ from: 'ai', message: `Here’s your song baby: https://spotify-api-t6b7.onrender.com/play?song=${encodeURIComponent(song)}` });
-      return res.send(`Here’s your song baby: https://spotify-api-t6b7.onrender.com/play?song=${encodeURIComponent(song)}`);
+      if (!song) return res.send("Please specify a song name.");
+
+      const apiRes = await axios.get(`https://spotify-api-t6b7.onrender.com/play?song=${encodeURIComponent(song)}`);
+      const audioUrl = apiRes.data.audioUrl || apiRes.data.url || apiRes.data;
+
+      const audioStream = await axios.get(audioUrl, { responseType: 'stream' });
+      res.setHeader('Content-Type', 'audio/mpeg');
+      return audioStream.data.pipe(res);
     }
 
+    // SEND ME VIDEO command
     if (msgLower.startsWith("send me video")) {
-      const query = message.replace(/send me video/i, "").trim() || "Rick Astley Never Gonna Give You Up";
-      chatHistory[username].push({ from: 'user', message });
-      chatHistory[username].push({ from: 'ai', message: `Here’s your video darling: https://spotify-api-t6b7.onrender.com/video?search=${encodeURIComponent(query)}` });
-      return res.send(`Here’s your video darling: https://spotify-api-t6b7.onrender.com/video?search=${encodeURIComponent(query)}`);
+      const query = message.replace(/send me video/i, "").trim();
+      if (!query) return res.send("Please specify a video search query.");
+
+      const apiRes = await axios.get(`https://spotify-api-t6b7.onrender.com/video?search=${encodeURIComponent(query)}`);
+      const videoUrl = apiRes.data.videoUrl || apiRes.data.url || apiRes.data;
+
+      const videoStream = await axios.get(videoUrl, { responseType: 'stream' });
+      res.setHeader('Content-Type', 'video/mp4');
+      return videoStream.data.pipe(res);
     }
 
+    // GENERATE IMAGE command
     if (msgLower.startsWith("generate image")) {
-      const prompt = message.replace(/generate image/i, "").trim() || "goku";
-      chatHistory[username].push({ from: 'user', message });
-      chatHistory[username].push({ from: 'ai', message: `Here’s your image honey: https://smfahim.xyz/creartai?prompt=${encodeURIComponent(prompt)}` });
-      return res.send(`Here’s your image honey: https://smfahim.xyz/creartai?prompt=${encodeURIComponent(prompt)}`);
+      const prompt = message.replace(/generate image/i, "").trim();
+      if (!prompt) return res.send("Please specify an image prompt.");
+
+      const apiRes = await axios.get(`https://smfahim.xyz/creartai?prompt=${encodeURIComponent(prompt)}`);
+      const imageUrl = apiRes.data.imageUrl || apiRes.data.url || apiRes.data;
+
+      const imageStream = await axios.get(imageUrl, { responseType: 'stream' });
+      res.setHeader('Content-Type', 'image/jpeg');
+      return imageStream.data.pipe(res);
     }
 
+    // Default AI chat
     const { data } = await axios.get(`https://new-gf-ai.onrender.com/babe?query=${encodeURIComponent(message)}`);
-    chatHistory[username].push({ from: 'user', message });
-    chatHistory[username].push({ from: 'ai', message: data });
     res.send(data);
+
   } catch (err) {
     console.error(err);
     res.status(500).send("AI offline baby, try later.");
   }
 });
 
-// Get chat history route
+// Chat history route
 app.get('/history', (req, res) => {
   const username = req.query.username;
   res.json(chatHistory[username] || []);
 });
 
-app.listen(port, () => console.log(`Toxic Baby AI running on http://localhost:${port}`));
+// Server start
+app.listen(port, () => console.log(`Toxic Baby AI running at http://localhost:${port}`));
