@@ -8,7 +8,7 @@ function getUsernameFromURL() {
 function toggleDarkMode() {
   document.body.classList.toggle('dark-mode');
   // Save preference
-  localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+  localStorage.setItem('darkMode', document.body.classList.contains('dark-mode').toString());
 }
 
 // Load dark mode preference
@@ -30,20 +30,17 @@ async function loadChatHistory() {
   container.innerHTML = 'Loading chat history...';
 
   try {
-    // FIXED: Correct history fetch URL
     const res = await fetch(`/history?username=${encodeURIComponent(username)}`);
     if (!res.ok) throw new Error('Failed to fetch history');
     const history = await res.json();
     container.innerHTML = '';
-    if (history.length === 0) {
+    if (!Array.isArray(history) || history.length === 0) {
       container.innerHTML = '<p>No chat history yet. Say hi!</p>';
       return;
     }
     history.forEach(msg => {
       const div = document.createElement('div');
-      div.classList.add('message');
-      div.classList.add(msg.from);
-      // FIXED: Use msg.message instead of msg.text (since your server sends {from, message})
+      div.classList.add('message', msg.from); // shorthand for two class adds
       div.textContent = msg.message;
       container.appendChild(div);
     });
@@ -80,8 +77,10 @@ async function sendMessage(event) {
     const res = await fetch('/ai-response', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, message: msg })
+      body: JSON.stringify({ username, message: msg }),
     });
+
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
 
     const botMsg = await res.text();
 
