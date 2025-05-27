@@ -66,7 +66,8 @@ app.post('/login', (req, res) => {
 
 // AI response route
 app.post('/ai-response', async (req, res) => {
-  const { message, username } = req.body;
+  try {
+    const { message, username } = req.body;
     if (!chatHistory[username]) chatHistory[username] = [];
 
     // Save user message
@@ -124,20 +125,6 @@ app.post('/ai-response', async (req, res) => {
   } catch (err) {
     console.error("Error in /ai-response:", err.message || err);
     res.status(500).send("AI offline baby, try later.");
-  }
-});
-
-// Front-end fetch AI reply
-app.get('/api/chat', async (req, res) => {
-  const message = req.query.message;
-  if (!message) return res.status(400).json({ reply: 'No message received.' });
-
-  try {
-    const { data } = await axios.get(`https://new-gf-ai.onrender.com/babe?query=${encodeURIComponent(message)}`);
-    res.json({ reply: data });
-  } catch (err) {
-    console.error("Error in /api/chat:", err.message || err);
-    res.status(500).json({ reply: 'Error fetching AI response.' });
   }
 });
 
