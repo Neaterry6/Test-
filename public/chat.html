@@ -38,13 +38,14 @@
     header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center; /* Center title */
       padding: 1rem 1rem 0.5rem 1rem;
       position: sticky;
       top: 0;
       background: inherit;
       z-index: 10;
       border-bottom: 1px solid #3334;
+      position: relative;
     }
     body.light-mode header {
       border-color: #ccc;
@@ -55,9 +56,11 @@
       margin: 0;
     }
 
-    /* Menu container */
+    /* Menu container moved to top-left */
     .menu-container {
-      position: relative;
+      position: absolute;
+      left: 1rem;
+      top: 1.25rem; /* vertically aligned with header */
       display: flex;
       align-items: center;
       gap: 0.5rem;
@@ -297,86 +300,83 @@
       }
     });
 
-    // Menu toggle
-    menuBtn.addEventListener('click', () => {
-      const expanded = menuBtn.getAttribute('aria-expanded') === 'true';
-      if (expanded) {
-        menuDropdown.style.display = 'none';
-        menuBtn.setAttribute('aria-expanded', 'false');
-        menuDropdown.setAttribute('aria-hidden', 'true');
-      } else {
-        menuDropdown.style.display = 'flex';
-        menuBtn.setAttribute('aria-expanded', 'true');
-        menuDropdown.setAttribute('aria-hidden', 'false');
-      }
+// Menu toggle
+menuBtn.addEventListener('click', () => {
+  const expanded = menuBtn.getAttribute('aria-expanded') === 'true';
+  if (expanded) {
+    menuDropdown.style.display = 'none';
+    menuBtn.setAttribute('aria-expanded', 'false');
+    menuDropdown.setAttribute('aria-hidden', 'true');
+  } else {
+    menuDropdown.style.display = 'flex';
+    menuBtn.setAttribute('aria-expanded', 'true');
+    menuDropdown.setAttribute('aria-hidden', 'false');
+  }
+});
+
+// Close menu if click outside
+document.addEventListener('click', e => {
+  if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
+    menuDropdown.style.display = 'none';
+    menuBtn.setAttribute('aria-expanded', 'false');
+    menuDropdown.setAttribute('aria-hidden', 'true');
+  }
+});
+
+// Profile button click
+profileBtn.addEventListener('click', () => {
+  alert(`Username: ${username}\n(This is your profile info.)`);
+  // Close menu
+  menuDropdown.style.display = 'none';
+  menuBtn.setAttribute('aria-expanded', 'false');
+  menuDropdown.setAttribute('aria-hidden', 'true');
+});
+
+// Chat history button click
+chatHistoryBtn.addEventListener('click', () => {
+  alert('Feature coming soon: Chat History!');
+  // Close menu
+  menuDropdown.style.display = 'none';
+  menuBtn.setAttribute('aria-expanded', 'false');
+  menuDropdown.setAttribute('aria-hidden', 'true');
+});
+
+// Function to append message to chat box
+function appendMessage(text, sender) {
+  const messageEl = document.createElement('div');
+  messageEl.classList.add('message', sender);
+  messageEl.textContent = text;
+  chatBox.appendChild(messageEl);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// Send message handler
+inputForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const message = messageInput.value.trim();
+  if (!message) return;
+  
+  appendMessage(message, 'user');
+  messageInput.value = '';
+  messageInput.focus();
+
+  try {
+    // Change this URL to your local server API endpoint
+    const response = await fetch('/api', { 
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user: username,
+        message: message
+      })
     });
 
-    // Close menu if click outside
-    document.addEventListener('click', e => {
-      if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
-        menuDropdown.style.display = 'none';
-        menuBtn.setAttribute('aria-expanded', 'false');
-        menuDropdown.setAttribute('aria-hidden', 'true');
-      }
-    });
+    if (!response.ok) throw new Error('Network response was not ok');
+    const data = await response.json();
 
-    // Profile button
-    profileBtn.addEventListener('click', () => {
-      window.location.href = `profile.html?username=${encodeURIComponent(username)}`;
-    });
-
-    // Chat History button
-    chatHistoryBtn.addEventListener('click', () => {
-      window.location.href = `chat-history.html?username=${encodeURIComponent(username)}`;
-    });
-
-    // Load chat history on page load
-    async function loadChatHistory() {
-      try {
-        const res = await fetch(`/history/${encodeURIComponent(username)}`);
-        if (!res.ok) throw new Error('Failed to load history');
-        const history = await res.json();
-        chatBox.innerHTML = '';
-        history.forEach(msg => {
-          addMessage(msg.from, msg.text);
-        });
-        chatBox.scrollTop = chatBox.scrollHeight;
-      } catch {
-        chatBox.innerHTML = '<p style="text-align:center; color:#f55;">Failed to load chat history.</p>';
-      }
-    }
-
-    function addMessage(sender, text) {
-      const div = document.createElement('div');
-      div.classList.add('message', sender);
-      div.textContent = text;
-      chatBox.appendChild(div);
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    inputForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const msg = messageInput.value.trim();
-      if (!msg) return;
-      addMessage('user', msg);
-      messageInput.value = '';
-      messageInput.focus();
-
-      try {
-        const res = await fetch('/ai-response', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, message: msg }),
-        });
-        if (!res.ok) throw new Error('Failed to get response');
-        const reply = await res.text();
-        addMessage('bot', reply);
-      } catch {
-        addMessage('bot', 'Sorry, AI is offline. Try again later.');
-      }
-    });
-
-    loadChatHistory();
-  </script>
-</body>
-</html>
+    appendMessage(data.response || "Sorry, I didn't get that.", 'bot');
+  } catch (error) {
+    appendMessage('Error communicating with AI server.', 'bot');
+    console.error(error);
+  }
+});
