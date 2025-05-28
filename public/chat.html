@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Toxic Baby AI Chat</title>
   <style>
-    :root {
+        :root {
       --color-dark-bg: #121212;
       --color-dark-text: #eee;
       --color-light-bg: #fff;
@@ -228,10 +228,37 @@
 </form>
 
 <script>
+  // Get username from URL
   const username = new URLSearchParams(window.location.search).get('username') || 'Guest';
   const usernameDisplay = document.getElementById('usernameDisplay');
   usernameDisplay.textContent = `Logged in as: ${username}`;
 
+  // Menu button functionality
+  const menuBtn = document.getElementById('menuBtn');
+  const menuDropdown = document.getElementById('menuDropdown');
+  menuBtn.addEventListener('click', () => {
+    const isVisible = menuDropdown.style.display === 'flex';
+    menuDropdown.style.display = isVisible ? 'none' : 'flex';
+  });
+
+  // Close menu if clicking outside
+  document.addEventListener('click', (e) => {
+    if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
+      menuDropdown.style.display = 'none';
+    }
+  });
+
+  // Redirect buttons
+  const profileBtn = document.getElementById('profileBtn');
+  const chatHistoryBtn = document.getElementById('chatHistoryBtn');
+  profileBtn.addEventListener('click', () => {
+    window.location.href = `/profile.html?username=${encodeURIComponent(username)}`;
+  });
+  chatHistoryBtn.addEventListener('click', () => {
+    window.location.href = `/chat-history.html?username=${encodeURIComponent(username)}`;
+  });
+
+  // Chat functionality
   const chatBox = document.getElementById('chatBox');
   const inputForm = document.getElementById('inputForm');
   const messageInput = document.getElementById('messageInput');
@@ -270,17 +297,24 @@
     messageInput.value = '';
 
     try {
-      const response = await fetch('/api', {
+      const response = await fetch('/ai-response', { // Correct API endpoint
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user: username, message }),
+        body: JSON.stringify({ username, message }),
       });
-      const data = await response.json();
-      appendMessage(data.response || "Sorry, I didn't understand.", 'bot');
+      const data = await response.text(); // Server sends plain text response
+      appendMessage(data || "Sorry, I didn't understand.", 'bot');
     } catch (error) {
       console.error(error);
       appendMessage("Error: Couldn't connect to server.", 'bot');
     }
+  });
+
+  // Dark mode toggle
+  const toggleDark = document.getElementById('toggleDark');
+  toggleDark.addEventListener('click', () => {
+    document.body.classList.toggle('light-mode');
+    toggleDark.textContent = document.body.classList.contains('light-mode') ? 'Dark Mode' : 'Light Mode';
   });
 </script>
 
