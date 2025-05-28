@@ -16,8 +16,26 @@ const usersFile = path.join(__dirname, 'data', 'users.json');
 const historyFile = path.join(__dirname, 'data', 'history.json');
 
 // Load users and chat history or initialize them
-let users = fs.existsSync(usersFile) ? JSON.parse(fs.readFileSync(usersFile, 'utf8')) : {};
-let chatHistory = fs.existsSync(historyFile) ? JSON.parse(fs.readFileSync(historyFile, 'utf8')) : {};
+let users = {};
+let chatHistory = {};
+
+try {
+  if (fs.existsSync(usersFile)) {
+    const usersData = fs.readFileSync(usersFile, 'utf8');
+    users = usersData ? JSON.parse(usersData) : {};
+  }
+} catch (err) {
+  console.error("Error loading users.json:", err.message);
+}
+
+try {
+  if (fs.existsSync(historyFile)) {
+    const historyData = fs.readFileSync(historyFile, 'utf8');
+    chatHistory = historyData ? JSON.parse(historyData) : {};
+  }
+} catch (err) {
+  console.error("Error loading history.json:", err.message);
+}
 
 // Redirect root to login page
 app.get('/', (req, res) => {
