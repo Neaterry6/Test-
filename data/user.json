@@ -1,21 +1,4 @@
-// Load users and chat history or initialize them
-let users = {};
-let chatHistory = {};
-
-try {
-  if (fs.existsSync(usersFile)) {
-    const usersData = fs.readFileSync(usersFile, 'utf8');
-    users = usersData ? JSON.parse(usersData) : {};
-  }
-} catch (err) {
-  console.error("Error loading users.json:", err.message);
-}
-
-try {
-  if (fs.existsSync(historyFile)) {
-    const historyData = fs.readFileSync(historyFile, 'utf8');
-    chatHistory = historyData ? JSON.parse(historyData) : {};
-  }
-} catch (err) {
-  console.error("Error loading history.json:", err.message);
+{
+  "exampleUser1": "password123",
+  "exampleUser2": "securePassword456"
 }
