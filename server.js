@@ -1,3 +1,4 @@
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const axios = require("axios");
@@ -12,34 +13,40 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// File paths
-const usersFile = path.join(__dirname, "data", "users.json");
-const historyFile = path.join(__dirname, "data", "history.json");
-const commandsDir = path.join(__dirname, "Commands");
+// File Paths
+const usersFile = path.join(__dirname, "db", "user.json");
+const historyFile = path.join(__dirname, "chat-history.json");
+const commandsDir = path.join(__dirname, "commands");
 
-// Load users and chat history or initialize them
+// Load Users and Chat History
 let users = {};
 let chatHistory = {};
 
-try {
-  if (fs.existsSync(usersFile)) {
-    const usersData = fs.readFileSync(usersFile, "utf8");
-    users = usersData ? JSON.parse(usersData) : {};
+const loadFile = (filePath, defaultValue) => {
+  try {
+    if (fs.existsSync(filePath)) {
+      const data = fs.readFileSync(filePath, "utf8");
+      return data ? JSON.parse(data) : defaultValue;
+    }
+  } catch (err) {
+    console.error(`Error loading ${filePath}:`, err.message);
   }
-} catch (err) {
-  console.error("Error loading users.json:", err.message);
-}
+  return defaultValue;
+};
 
-try {
-  if (fs.existsSync(historyFile)) {
-    const historyData = fs.readFileSync(historyFile, "utf8");
-    chatHistory = historyData ? JSON.parse(historyData) : {};
+users = loadFile(usersFile, {});
+chatHistory = loadFile(historyFile, {});
+
+// Save Data to File
+const saveFile = (filePath, data) => {
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.error(`Error saving to ${filePath}:`, err.message);
   }
-} catch (err) {
-  console.error("Error loading history.json:", err.message);
-}
+};
 
-// Load commands dynamically
+// Load Commands
 const commands = {};
 try {
   const commandFiles = fs.readdirSync(commandsDir).filter(file => file.endsWith(".js"));
@@ -59,25 +66,20 @@ try {
   console.error("Error loading commands:", err.message);
 }
 
-// Redirect root to login page
-app.get("/", (req, res) => {
-  res.redirect("/login.html");
+// Routes
+
+// Redirect Root to Login Page
+app.get("/", (req, res) => res.redirect("/login.html"));
+
+// Serve Static HTML Files
+const staticFiles = ["chat.html", "profile.html", "chat-history.html"];
+staticFiles.forEach(file => {
+  app.get(`/${file}`, (req, res) => {
+    res.sendFile(path.join(__dirname, "public", file));
+  });
 });
 
-// Serve static HTML files explicitly
-app.get("/chat.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "chat.html"));
-});
-
-app.get("/profile.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "profile.html"));
-});
-
-app.get("/chat-history.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "chat-history.html"));
-});
-
-// Signup route
+// Signup Route
 app.post("/signup", (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).send("Missing credentials.");
@@ -85,38 +87,34 @@ app.post("/signup", (req, res) => {
 
   users[username] = password;
   chatHistory[username] = [];
-
-  // Save to file
-  fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
-  fs.writeFileSync(historyFile, JSON.stringify(chatHistory, null, 2));
+  saveFile(usersFile, users);
+  saveFile(historyFile, chatHistory);
 
   res.redirect("/login.html");
 });
 
-// Login route
+// Login Route
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).send("Missing credentials.");
-
   if (users[username] === password) {
     return res.redirect(`/chat.html?username=${encodeURIComponent(username)}`);
   }
   res.status(401).send("Invalid username or password.");
 });
 
-// AI response route
+// AI Response Route
 app.post("/ai-response", async (req, res) => {
   try {
     const { message, username } = req.body;
     if (!chatHistory[username]) chatHistory[username] = [];
 
-    // Save user message
     chatHistory[username].push({ from: "user", message });
-    fs.writeFileSync(historyFile, JSON.stringify(chatHistory, null, 2));
+    saveFile(historyFile, chatHistory);
 
     const msgLower = message.toLowerCase();
 
-    // Handle commands with prefix "."
+    // Handle Commands
     if (msgLower.startsWith(".")) {
       const commandName = msgLower.slice(1).split(" ")[0]; // Extract command name
       const args = msgLower.slice(commandName.length + 2).split(" "); // Extract arguments
@@ -137,20 +135,21 @@ app.post("/ai-response", async (req, res) => {
       }
     }
 
-    // Default AI chat
-    const { data } = await axios.get(`https://new-gf-ai.onrender.com/babe?query=${encodeURIComponent(message)}`);
+    // Default AI Chat
+    const { data } = await axios.get(
+      `https://new-gf-ai.onrender.com/babe?query=${encodeURIComponent(message)}`
+    );
     chatHistory[username].push({ from: "bot", message: data });
-    fs.writeFileSync(historyFile, JSON.stringify(chatHistory, null, 2));
+    saveFile(historyFile, chatHistory);
 
     res.send(data);
-
   } catch (err) {
     console.error("Error in /ai-response:", err.message || err);
     res.status(500).send("AI offline baby, try later.");
   }
 });
 
-// Get chat history for a user
+// Get Chat History
 app.get("/history", (req, res) => {
   const username = req.query.username;
   if (!username) return res.status(400).json({ error: "No username provided." });
@@ -158,16 +157,16 @@ app.get("/history", (req, res) => {
   res.json(chatHistory[username] || []);
 });
 
-// Clear chat history for a user
+// Clear Chat History
 app.get("/clear-history", (req, res) => {
   const username = req.query.username;
   if (!username) return res.status(400).json({ error: "No username provided." });
 
   chatHistory[username] = [];
-  fs.writeFileSync(historyFile, JSON.stringify(chatHistory, null, 2));
+  saveFile(historyFile, chatHistory);
 
   res.json({ success: true, message: `History cleared for ${username}` });
 });
 
-// Start server
+// Start Server
 app.listen(port, () => console.log(`Toxic Baby AI running at http://localhost:${port}`));
