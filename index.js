@@ -1,4 +1,3 @@
-
 const express = require("express");
 const bodyParser = require("body-parser");
 const axios = require("axios");
@@ -22,11 +21,12 @@ const commandsDir = path.join(__dirname, "commands");
 let users = {};
 let chatHistory = {};
 
+// Helper Function: Load File
 const loadFile = (filePath, defaultValue) => {
   try {
     if (fs.existsSync(filePath)) {
       const data = fs.readFileSync(filePath, "utf8");
-      return data ? JSON.parse(data) : defaultValue;
+      return data.trim() ? JSON.parse(data) : defaultValue; // Handle empty files
     }
   } catch (err) {
     console.error(`Error loading ${filePath}:`, err.message);
@@ -37,7 +37,7 @@ const loadFile = (filePath, defaultValue) => {
 users = loadFile(usersFile, {});
 chatHistory = loadFile(historyFile, {});
 
-// Save Data to File
+// Helper Function: Save File
 const saveFile = (filePath, data) => {
   try {
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
@@ -46,24 +46,29 @@ const saveFile = (filePath, data) => {
   }
 };
 
-// Load Commands
+// Load Commands Dynamically
 const commands = {};
 try {
+  if (!fs.existsSync(commandsDir)) fs.mkdirSync(commandsDir); // Create commands directory if missing
+
   const commandFiles = fs.readdirSync(commandsDir).filter(file => file.endsWith(".js"));
-  for (const file of commandFiles) {
+  commandFiles.forEach(file => {
     const command = require(path.join(commandsDir, file));
     if (command.config && command.onStart) {
       commands[command.config.name] = command;
       if (command.config.aliases) {
-        for (const alias of command.config.aliases) {
+        command.config.aliases.forEach(alias => {
           commands[alias] = command;
-        }
+        });
       }
+    } else {
+      console.warn(`⚠️ Invalid command file skipped: ${file}`);
     }
-  }
-  console.log("Commands loaded:", Object.keys(commands));
+  });
+
+  console.log("✅ Commands loaded:", Object.keys(commands));
 } catch (err) {
-  console.error("Error loading commands:", err.message);
+  console.error("❌ Error loading commands:", err.message);
 }
 
 // Routes
@@ -72,8 +77,7 @@ try {
 app.get("/", (req, res) => res.redirect("/login.html"));
 
 // Serve Static HTML Files
-const staticFiles = ["chat.html", "profile.html", "chat-history.html"];
-staticFiles.forEach(file => {
+["chat.html", "profile.html", "chat-history.html"].forEach(file => {
   app.get(`/${file}`, (req, res) => {
     res.sendFile(path.join(__dirname, "public", file));
   });
@@ -82,8 +86,12 @@ staticFiles.forEach(file => {
 // Signup Route
 app.post("/signup", (req, res) => {
   const { username, password } = req.body;
-  if (!username || !password) return res.status(400).send("Missing credentials.");
-  if (users[username]) return res.status(409).send("Username already taken.");
+  if (!username || !password) {
+    return res.status(400).send("❌ Missing credentials.");
+  }
+  if (users[username]) {
+    return res.status(409).send("❌ Username already taken.");
+  }
 
   users[username] = password;
   chatHistory[username] = [];
@@ -96,11 +104,13 @@ app.post("/signup", (req, res) => {
 // Login Route
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
-  if (!username || !password) return res.status(400).send("Missing credentials.");
+  if (!username || !password) {
+    return res.status(400).send("❌ Missing credentials.");
+  }
   if (users[username] === password) {
     return res.redirect(`/chat.html?username=${encodeURIComponent(username)}`);
   }
-  res.status(401).send("Invalid username or password.");
+  res.status(401).send("❌ Invalid username or password.");
 });
 
 // AI Response Route
@@ -144,15 +154,17 @@ app.post("/ai-response", async (req, res) => {
 
     res.send(data);
   } catch (err) {
-    console.error("Error in /ai-response:", err.message || err);
-    res.status(500).send("AI offline baby, try later.");
+    console.error("❌ Error in /ai-response:", err.message || err);
+    res.status(500).send("❌ AI is offline, please try again later.");
   }
 });
 
 // Get Chat History
 app.get("/history", (req, res) => {
   const username = req.query.username;
-  if (!username) return res.status(400).json({ error: "No username provided." });
+  if (!username) {
+    return res.status(400).json({ error: "❌ No username provided." });
+  }
 
   res.json(chatHistory[username] || []);
 });
@@ -160,13 +172,15 @@ app.get("/history", (req, res) => {
 // Clear Chat History
 app.get("/clear-history", (req, res) => {
   const username = req.query.username;
-  if (!username) return res.status(400).json({ error: "No username provided." });
+  if (!username) {
+    return res.status(400).json({ error: "❌ No username provided." });
+  }
 
   chatHistory[username] = [];
   saveFile(historyFile, chatHistory);
 
-  res.json({ success: true, message: `History cleared for ${username}` });
+  res.json({ success: true, message: `✅ History cleared for ${username}` });
 });
 
 // Start Server
-app.listen(port, () => console.log(`Toxic Baby AI running at http://localhost:${port}`));
+app.listen(port, () => console.log(`🚀 Toxic Baby AI running at http://localhost:${port}`));
